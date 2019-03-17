@@ -36,6 +36,22 @@ def login():
     return jsonify(response)
 
 
+@app.route('/api/signup', methods=['POST'])
+def signup():
+    if request.method == 'POST':
+        print("Request: %s" % request.get_json())
+        user_details = request.get_json()
+        response = {
+            'authorized': True
+        }
+    else:
+        print('No idea what this request is')
+        response = {
+            'authorized': False
+        }
+    return jsonify(response)
+
+
 
 # why do we need it? see Vue Router catch all route
 # https://router.vuejs.org/guide/essentials/history-mode.html#example-server-configurations
@@ -82,4 +98,5 @@ def show_subpath(subpath):
 # but it is not recommended
 if __name__ == "__main__":
     app.debug = True  # NOT to use in PROD - allow the server to reload autonmatically after each change of code
-    app.run(host="192.168.1.4",)
+    # app.run(host="192.168.1.4",)
+    app.run(host="localhost",)
