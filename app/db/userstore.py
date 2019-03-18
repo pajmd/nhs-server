@@ -1,8 +1,8 @@
-import pymongo
+from app.db.store import MongoStore
 import datetime
 
-MONGO_URI = 'mongodb://127.0.0.1:27017/'
-MONGO_DATABASE = 'nhsdb'
+
+COLLECTION_NAME = 'nhsUsers'
 
 
 class StoreUserAlreadyExists(Exception):
@@ -13,33 +13,20 @@ class StoreUserNotFound(Exception):
     pass
 
 
-class MongoStore(object):
-    collection_name = 'nhsUsers'
+class UserStore(MongoStore):
 
-    def __init__(self, mongo_uri, mongo_db, validate=None, validation_schema=None):
-        self.mongo_uri = mongo_uri
-        self.mongo_db = mongo_db
+    def __init__(self, mongo_uri, mongo_db, validate=False, validation_schema=None):
+        super(MongoStore, self).__init__(mongo_uri, mongo_db, COLLECTION_NAME)
         self.validate = validate
         self.validation_schema = validation_schema
 
-    def open_db(self):
-        self.client = pymongo.MongoClient(self.mongo_uri)
-        self.db = self.client[self.mongo_db]
+    def __enter__(self):
+        self.open_db()
         if self.validate:
-            self.apply_validation()
+            self.apply_validation(self.validation_schema)
 
-    def apply_validation(self):
-        if self.collection_name in self.db.collection_names():
-            self.db.runCommand({
-                'collMod': self.collection_name,
-                'validator': self.validation_schema
-            }
-            )
-        else:
-            self.db.createCollection(self.collection_name, **self.validation_schema)
-
-    def close_db(self, spider):
-        self.client.close()
+    def __exit__(self, *args):
+        self.close_db()
 
     def add_user(self, user):
         # user:
@@ -52,14 +39,14 @@ class MongoStore(object):
         # }
 
         try:
-            match = self.db[self.collection_name].find_one({
+            match = self.find_one({
                 'email': user['email']
             })
             if not match:
                 user['create_ts'] = datetime.datetime.utcnow()
                 user['update_ts'] = datetime.datetime.utcnow()
-                id = self.db[self.collection_name].insert_one(user).inserted_id
-                return id
+                user_id = self.db[self.collection_name].insert_one(user).inserted_id
+                return user_id
             else:
                 raise StoreUserAlreadyExists('%s already exists' % user['email'])
         except Exception as ex:

@@ -1,16 +1,16 @@
 from app.utils.helper import get_password_hash, get_salt
-from app.utils import store
+from app.db.userstore import UserStore
+from app.db.store import MONGO_URI, MONGO_DATABASE
+
 
 # need to add context with to close db
 class User(object):
     def __init__(self, user):
         self.user = user
-        db = store.MongoStore(store.MONGO_URI, store.MONGO_DATABASE)
-        self.client_db = db.open_db()
 
     def create_user(self):
         salt = get_salt()
-        hash = get_password_hash(self.user['password'], get_salt())
+        hashed_password = get_password_hash(self.user['password'], get_salt())
         # user:
         # {
         #   'email': email@address,
@@ -19,11 +19,12 @@ class User(object):
         #   'first_name': firstname
         #   'last_name': lastname
         # }
-        self.user['hash'] = hash
+        self.user['hash'] = hashed_password
         self.user['salt'] = salt
         self.user['first_name'] = self.user.get('first_name', 'unknown first name')
-        self.user['lasst_name'] = self.user.get('last_name', 'unknown last name')
-        self.client_db.add_user(self.user)
+        self.user['last_name'] = self.user.get('last_name', 'unknown last name')
+        with UserStore(MONGO_URI, MONGO_DATABASE) as user_store:
+            user_store.add_user(self.user)
 
     def update(self):
         pass
