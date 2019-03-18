@@ -4,8 +4,8 @@ from app.solr.solrclient import solr_search
 
 app = Flask(__name__,
             static_url_path='',
-            static_folder = "../../../../js_workspace/VueProjects/nhs-ui/dist",
-            template_folder = "../../../../js_workspace/VueProjects/nhs-ui/dist")
+            static_folder="../../../../js_workspace/VueProjects/nhs-ui/dist",
+            template_folder="../../../../js_workspace/VueProjects/nhs-ui/dist")
 
 
 @app.route('/api/search', methods=['POST'])
