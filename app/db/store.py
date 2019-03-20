@@ -6,7 +6,7 @@ MONGO_DATABASE = 'nhsdb'
 
 class MongoStore(object):
 
-    def __init__(self, mongo_uri, mongo_db, collection_name, validation_schema=None):
+    def __init__(self, mongo_uri, mongo_db, collection_name):
         self.mongo_uri = mongo_uri
         self.mongo_db = mongo_db
         self.collection_name = collection_name
@@ -16,8 +16,8 @@ class MongoStore(object):
         self.db = self.client[self.mongo_db]
 
     def apply_validation(self, validation_schema):
-        if self.collection_name in self.db.collection_names():  # list_collection_names
-            self.db.runCommand({
+        if self.collection_name in self.db.list_collection_names():
+            self.db.command({
                 'collMod': self.collection_name,
                 'validator': validation_schema
             }
@@ -27,7 +27,7 @@ class MongoStore(object):
             self.db.create_collection(self.collection_name)
             self.db.command({
                 'collMod': self.collection_name,
-                'validator': validation_schema['validator']
+                'validator': validation_schema
             }
             )
 

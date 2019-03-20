@@ -16,7 +16,7 @@ class StoreUserNotFound(Exception):
 class UserStore(MongoStore):
 
     def __init__(self, mongo_uri, mongo_db, validate=False, validation_schema=None):
-        super(MongoStore, self).__init__(mongo_uri, mongo_db, COLLECTION_NAME)
+        super(UserStore, self).__init__(mongo_uri, mongo_db, COLLECTION_NAME)
         self.validate = validate
         self.validation_schema = validation_schema
 
@@ -24,6 +24,7 @@ class UserStore(MongoStore):
         self.open_db()
         if self.validate:
             self.apply_validation(self.validation_schema)
+        return self
 
     def __exit__(self, *args):
         self.close_db()
@@ -52,6 +53,20 @@ class UserStore(MongoStore):
         except Exception as ex:
             print("Failed adding user %s - %s" % (user, ex))
             raise
+
+    def get_user(self, user, hashed_password=None):
+        """get a user, the key being its unique email address"""
+        # user:
+        # {
+        #   'email': email@address,
+        #   'hash': hash,
+        #   'salt': salt,
+        #   'first_name': firstname
+        #   'last_name': lastname
+        # }
+        return self.find_one({
+                'email': user['email']
+            })
 
     def update_user(self, user):
         # user:
@@ -84,7 +99,7 @@ class UserStore(MongoStore):
         try:
             match = self.db[self.collection_name].find_one(user)
             if match:
-                res = self.db[self.collection_name].delete_one(
+                self.db[self.collection_name].delete_one(
                     {
                         '_id': match['_id']
                     })

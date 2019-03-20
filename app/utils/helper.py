@@ -5,8 +5,8 @@ from app.utils import secrets
 
 def get_password_hash(password, salt):
     dk = hashlib.pbkdf2_hmac('md5', password.encode('utf-8'), salt, 100000)
-    return  binascii.hexlify(dk)
+    return binascii.hexlify(dk)
 
 
 def get_salt(n=16):
-    salt = secrets.token_bytes(n)
+    return secrets.token_bytes(n)
