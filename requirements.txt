@@ -3,3 +3,4 @@ Flask == 1.0.2
 pytest == 4.0.1
 requests == 2.20.1
 Jinja2 == 2.10
+pyjwt == 1.7.1
