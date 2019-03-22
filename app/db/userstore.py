@@ -43,16 +43,18 @@ class UserStore(MongoStore):
             match = self.find_one({
                 'email': user['email']
             })
-            if not match:
-                user['create_ts'] = datetime.datetime.utcnow()
-                user['update_ts'] = datetime.datetime.utcnow()
-                user_id = self.db[self.collection_name].insert_one(user).inserted_id
-                return user_id
-            else:
-                raise StoreUserAlreadyExists('%s already exists' % user['email'])
         except Exception as ex:
             print("Failed adding user %s - %s" % (user, ex))
             raise
+        if not match:
+            user['create_ts'] = datetime.datetime.utcnow()
+            user['update_ts'] = datetime.datetime.utcnow()
+            user_id = self.db[self.collection_name].insert_one(user).inserted_id
+            user['_id'] = user_id
+            return user
+        else:
+            raise StoreUserAlreadyExists('%s already exists' % user['email'])
+
 
     def get_user(self, user, hashed_password=None):
         """get a user, the key being its unique email address"""

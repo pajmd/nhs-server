@@ -8,6 +8,11 @@ class JwtExpiredSignatureError(Exception):
 class JwtMissingRequiredClaimError(Exception):
     pass
 
+
+class JwtInvalidSignatureError(Exception):
+    pass
+
+
 def sign(header, payload, secret):
     """signs the header and payloads. Returna JWT object
     header = {
@@ -36,8 +41,9 @@ def verify(jwt_token, secret):
                                  'verify_iat': True
                              })
         return payload
-
     except jwt.ExpiredSignatureError:
         raise JwtExpiredSignatureError('Signature has expired')
     except jwt.MissingRequiredClaimError as ex:
         raise JwtMissingRequiredClaimError(str(ex))
+    except jwt.InvalidSignatureError as ex:
+        raise JwtInvalidSignatureError(str(ex))

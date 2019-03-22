@@ -1,6 +1,14 @@
 from app.utils.helper import get_password_hash, get_salt
-from app.db.userstore import UserStore
+from app.db.userstore import UserStore, StoreUserAlreadyExists
 from app.db.store import MONGO_URI, MONGO_DATABASE
+
+
+class UserAlreadyExists(Exception):
+    pass
+
+
+class UserCreateError(Exception):
+    pass
 
 
 # need to add context with to close db
@@ -12,7 +20,7 @@ class User(object):
 
     def create_user(self):
         salt = get_salt()
-        hashed_password = get_password_hash(self.user['password'], get_salt())
+        hashed_password = get_password_hash(self.user['password'], salt)
         # user:
         # {
         #   'email': email@address,
@@ -26,7 +34,13 @@ class User(object):
         self.user['first_name'] = self.user.get('first_name', 'unknown first name')
         self.user['last_name'] = self.user.get('last_name', 'unknown last name')
         with UserStore(self.mongo_uri, self.mongo_database) as user_store:
-            user_store.add_user(self.user)
+            try:
+                self.user.pop('password')
+                return user_store.add_user(self.user)
+            except StoreUserAlreadyExists as e:
+                raise UserAlreadyExists(str(e))
+            except Exception as e:
+                raise UserCreateError(str(e))
 
     def update(self):
         pass
@@ -39,11 +53,17 @@ class User(object):
             return user_store.get_user(self.user)
 
     def authenticate_user(self):
+        """returns None if user not authenticated"""
         with UserStore(self.mongo_uri, self.mongo_database) as user_store:
             stored_user = user_store.get_user(self.user)
             if stored_user:
                 hashed_password = get_password_hash(self.user['password'], stored_user['salt'])
                 if hashed_password == stored_user['hash']:
-                    return True
-                else:
-                    False
+                    return self.public_user(stored_user)
+
+    @staticmethod
+    def public_user(user):
+        public_usr = user.copy()
+        public_usr.pop('hash', None)
+        public_usr.pop('salt', None)
+        return public_usr

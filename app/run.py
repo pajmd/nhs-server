@@ -1,5 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 from app.solr.solrclient import solr_search
+from app.user import User, UserAlreadyExists, UserCreateError
+from app.utils.helper import get_jwt
 
 
 app = Flask(__name__,
@@ -25,9 +27,30 @@ def search():
 def login():
     if request.method == 'POST':
         print("Request: %s" % request.get_json())
-        response = {
-            'authorized': True
-        }
+        user_details = request.get_json()
+        user = User(user_details)
+        try:
+            authenticated_user = user.authenticate_user()
+            if authenticated_user:
+                authenticated_user.update(
+                    {
+                        'authorized': True,
+                        'token': get_jwt(authenticated_user)
+                    }
+                )
+                response = authenticated_user
+            else:
+                response = {
+                    'authorized': False,
+                    'message': 'Wrong credentials',
+                    'status': 401
+                }
+        except UserCreateError as e:
+            response = {
+                'authorized': False,
+                'message': str(e),
+                'status': 500
+            }
     else:
         print('No idea what this request is')
         response = {
@@ -41,9 +64,34 @@ def signup():
     if request.method == 'POST':
         print("Request: %s" % request.get_json())
         user_details = request.get_json()
-        response = {
-            'authorized': True
-        }
+        user = User(user_details)
+        try:
+            new_user = user.create_user()
+            response = {
+                'authorized': True,
+                'token': get_jwt(new_user),
+                'email': new_user['email'],
+                'first_name': new_user['first_name'],
+                'last_name': new_user['last_name']
+            }
+        except UserAlreadyExists as e:
+            response = {
+                'authorized': False,
+                'message': str(e),
+                'status': 400
+            }
+        except UserCreateError as e:
+            response = {
+                'authorized': False,
+                'message': str(e),
+                'status': 500
+            }
+        except Exception as e:
+            response = {
+                'authorized': False,
+                'message': str(e),
+                'status': 500
+            }
     else:
         print('No idea what this request is')
         response = {
