@@ -66,4 +66,5 @@ class User(object):
         public_usr = user.copy()
         public_usr.pop('hash', None)
         public_usr.pop('salt', None)
+        public_usr['_id'] = str(public_usr['_id'])
         return public_usr

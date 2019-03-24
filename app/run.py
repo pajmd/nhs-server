@@ -22,6 +22,8 @@ def search():
         }
     return jsonify(response)
 
+# for error handling investigate: http://flask.pocoo.org/docs/1.0/patterns/apierrors/
+
 
 @app.route('/api/login', methods=['GET', 'POST'])
 def login():
@@ -29,34 +31,36 @@ def login():
         print("Request: %s" % request.get_json())
         user_details = request.get_json()
         user = User(user_details)
+        status_code = 200
         try:
             authenticated_user = user.authenticate_user()
             if authenticated_user:
                 authenticated_user.update(
                     {
                         'authorized': True,
-                        'token': get_jwt(authenticated_user)
+                        'token': get_jwt(authenticated_user).decode('utf8')  # the token is already b64 url encoded
                     }
                 )
                 response = authenticated_user
             else:
+                status_code = 401
                 response = {
                     'authorized': False,
-                    'message': 'Wrong credentials',
-                    'status': 401
+                    'message': 'Wrong credentials'
                 }
         except UserCreateError as e:
+            status_code = 500
             response = {
                 'authorized': False,
                 'message': str(e),
-                'status': 500
             }
     else:
         print('No idea what this request is')
+        status_code = 400
         response = {
             'authorized': False
         }
-    return jsonify(response)
+    return jsonify(response), status_code
 
 
 @app.route('/api/signup', methods=['POST'])
@@ -65,39 +69,41 @@ def signup():
         print("Request: %s" % request.get_json())
         user_details = request.get_json()
         user = User(user_details)
+        status_code = 200
         try:
             new_user = user.create_user()
             response = {
                 'authorized': True,
-                'token': get_jwt(new_user),
+                'token': get_jwt(new_user).decode('utf8'),
                 'email': new_user['email'],
                 'first_name': new_user['first_name'],
                 'last_name': new_user['last_name']
             }
         except UserAlreadyExists as e:
+            status_code = 400
             response = {
                 'authorized': False,
-                'message': str(e),
-                'status': 400
+                'message': str(e)
             }
         except UserCreateError as e:
+            status_code = 500
             response = {
                 'authorized': False,
-                'message': str(e),
-                'status': 500
+                'message': str(e)
             }
         except Exception as e:
+            status_code = 500
             response = {
                 'authorized': False,
                 'message': str(e),
-                'status': 500
             }
     else:
         print('No idea what this request is')
+        status_code = 400
         response = {
             'authorized': False
         }
-    return jsonify(response)
+    return jsonify(response), status_code
 
 
 

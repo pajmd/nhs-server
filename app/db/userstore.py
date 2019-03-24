@@ -55,7 +55,6 @@ class UserStore(MongoStore):
         else:
             raise StoreUserAlreadyExists('%s already exists' % user['email'])
 
-
     def get_user(self, user, hashed_password=None):
         """get a user, the key being its unique email address"""
         # user:
