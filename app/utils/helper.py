@@ -24,4 +24,21 @@ def get_jwt(user):
         "userId": str(user['_id']),
         "name": "%s %s"%(user['first_name'], user['last_name'])
     }
-    return jwt.sign(header, payload,secrets.get_jwt_secret())
+    return jwt.sign(header, payload,secrets.get_jwt_secret()).decode('utf8')  # the token is already b64 url encoded
+
+
+def get_header_jwt(headers):
+    if headers.get('Authorization'):
+        athorization = headers.get('Authorization').split(' ')
+        if len(athorization) == 2:
+            return athorization[1].encode('utf8')
+
+
+def user_authorized(headers):
+    jwt = get_header_jwt(headers)
+    try:
+        if jwt:
+            return jwt.verify(jwt, secrets.get_jwt_secret())
+    except jwt.JwtInvalidSignatureError:
+        return None
+

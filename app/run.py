@@ -1,7 +1,7 @@
 from flask import Flask, render_template, jsonify, request
 from app.solr.solrclient import solr_search
 from app.user import User, UserAlreadyExists, UserCreateError
-from app.utils.helper import get_jwt
+from app.utils.helper import get_jwt, user_authorized
 
 
 app = Flask(__name__,
@@ -12,15 +12,24 @@ app = Flask(__name__,
 
 @app.route('/api/search', methods=['POST'])
 def search():
+    status_code = 200
     if request.method == 'POST':
         print("Request: %s" % request.get_json())
-        response = solr_search(request.get_json())
+        if user_authorized(request.headers):
+            response = solr_search(request.get_json())
+        else:
+            status_code = 401
+            response = {
+                'authorized': False,
+                'message': 'User not authorized'
+            }
+
     else:
         print('No idea what this request is')
         response = {
             'error': 'Search request not recognized'
         }
-    return jsonify(response)
+    return jsonify(response), status_code
 
 # for error handling investigate: http://flask.pocoo.org/docs/1.0/patterns/apierrors/
 
@@ -38,7 +47,7 @@ def login():
                 authenticated_user.update(
                     {
                         'authorized': True,
-                        'token': get_jwt(authenticated_user).decode('utf8')  # the token is already b64 url encoded
+                        'token': get_jwt(authenticated_user)
                     }
                 )
                 response = authenticated_user
@@ -74,7 +83,7 @@ def signup():
             new_user = user.create_user()
             response = {
                 'authorized': True,
-                'token': get_jwt(new_user).decode('utf8'),
+                'token': get_jwt(new_user),
                 'email': new_user['email'],
                 'first_name': new_user['first_name'],
                 'last_name': new_user['last_name']
