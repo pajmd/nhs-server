@@ -2,12 +2,14 @@ from flask import Flask, render_template, jsonify, request
 from app.solr.solrclient import solr_search
 from app.user import User, UserAlreadyExists, UserCreateError
 from app.utils.helper import get_jwt, user_authorized
+import os
 
 
+NHS_UI_DIST = os.getenv("NHS_UI_DIST", "../../../../js_workspace/VueProjects/nhs-ui/dist")
 app = Flask(__name__,
             static_url_path='',
-            static_folder="../../../../js_workspace/VueProjects/nhs-ui/dist",
-            template_folder="../../../../js_workspace/VueProjects/nhs-ui/dist")
+            static_folder=NHS_UI_DIST,
+            template_folder=NHS_UI_DIST)
 
 
 @app.route('/api/search', methods=['POST'])
@@ -162,4 +164,4 @@ def show_subpath(subpath):
 if __name__ == "__main__":
     app.debug = True  # NOT to use in PROD - allow the server to reload autonmatically after each change of code
     # app.run(host="192.168.1.4",)
-    app.run(host="localhost",)
+    app.run(host="0.0.0.0",)
