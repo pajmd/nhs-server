@@ -58,6 +58,6 @@ def solr_search(req):
     #     if v:
     #         params[k] = v
     # r = requests.get(url=get_url(), params=params)
-    print("requesting solr: %s" % r.url)
+    app.logger.info("requesting solr: %s" % r.url)
     r.raise_for_status()
     return r.json()

@@ -1,12 +1,45 @@
 from flask import Flask, render_template, jsonify, request
 from app.solr.solrclient import solr_search
-from app.user import User, UserAlreadyExists, UserCreateError
+from app.user import User, UserAlreadyExists, UserCreateError, UserFindError
 from app.utils.helper import get_jwt, user_authorized
 import os
+from logging.config import dictConfig
+from flask.logging import default_handler
+import logging
 
+
+class RequestFormatter(logging.Formatter):
+    def format(self, record):
+        record.url = request.url
+        record.remote_addr = request.remote_addr
+        return super().format(record)
+
+
+formatter = RequestFormatter(
+    '[%(asctime)s] %(remote_addr)s requested %(url)s\n'
+    '%(levelname)s in %(module)s: %(message)s'
+)
+default_handler.setFormatter(formatter)
+
+
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.StreamHandler',
+        'stream': 'ext://flask.logging.wsgi_errors_stream',
+        'formatter': 'default'
+    }},
+    'root': {
+        'level': 'INFO',
+        'handlers': ['wsgi']
+    }
+})
 
 NHS_UI_DIST = os.getenv("NHS_UI_DIST", "../../../../js_workspace/VueProjects/nhs-ui/dist")
-app = Flask(__name__,
+app = Flask("nhs-app",
             static_url_path='',
             static_folder=NHS_UI_DIST,
             template_folder=NHS_UI_DIST)
@@ -16,7 +49,7 @@ app = Flask(__name__,
 def search():
     status_code = 200
     if request.method == 'POST':
-        print("Request: %s" % request.get_json())
+        app.logger.info("Request: %s" % request.get_json())
         if user_authorized(request.headers):
             response = solr_search(request.get_json())
         else:
@@ -27,7 +60,7 @@ def search():
             }
 
     else:
-        print('No idea what this request is')
+        app.logger.info('No idea what this request is')
         response = {
             'error': 'Search request not recognized'
         }
@@ -39,7 +72,7 @@ def search():
 @app.route('/api/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        print("Request: %s" % request.get_json())
+        app.logger.info("Request: %s" % request.get_json())
         user_details = request.get_json()
         user = User(user_details)
         status_code = 200
@@ -65,8 +98,15 @@ def login():
                 'authorized': False,
                 'message': str(e),
             }
+        except UserFindError as e:
+            status_code = 500
+            response = {
+                'authorized': False,
+                'message': str(e),
+            }
+
     else:
-        print('No idea what this request is')
+        app.logger.info('No idea what this request is')
         status_code = 400
         response = {
             'authorized': False
@@ -77,7 +117,7 @@ def login():
 @app.route('/api/signup', methods=['POST'])
 def signup():
     if request.method == 'POST':
-        print("Request: %s" % request.get_json())
+        app.logger.info("Request: %s" % request.get_json())
         user_details = request.get_json()
         user = User(user_details)
         status_code = 200
@@ -109,7 +149,7 @@ def signup():
                 'message': str(e),
             }
     else:
-        print('No idea what this request is')
+        app.logger.info('No idea what this request is')
         status_code = 400
         response = {
             'authorized': False
@@ -162,6 +202,12 @@ def show_subpath(subpath):
 # an alternative way to $ flask run --host=192.168.1.4 is app.run()
 # but it is not recommended
 if __name__ == "__main__":
+    app.logger.info("Logger name: %s" % app.logger.name)
     app.debug = True  # NOT to use in PROD - allow the server to reload autonmatically after each change of code
     # app.run(host="192.168.1.4",)
+    app.logger.info('NHS_UI_DIST: %s' % NHS_UI_DIST)
+    cwd = os.getcwd()
+    app.logger.info("cwd=%s" % cwd)
+    ls = os.listdir(NHS_UI_DIST)
+    app.logger.info('ls = %s' % ','.join(ls))
     app.run(host="0.0.0.0",)

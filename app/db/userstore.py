@@ -1,5 +1,8 @@
-from app.db.store import MongoStore
+from app.db.store import MongoStore, StoreConnectionError
 import datetime
+import logging
+
+logger = logging.getLogger("%s.%s" % ('nhs-app', __name__))
 
 
 COLLECTION_NAME = 'nhsUsers'
@@ -44,7 +47,7 @@ class UserStore(MongoStore):
                 'email': user['email']
             })
         except Exception as ex:
-            print("Failed adding user %s - %s" % (user, ex))
+            logger.info("Failed adding user %s - %s" % (user, ex))
             raise
         if not match:
             user['create_ts'] = datetime.datetime.utcnow()
@@ -65,9 +68,12 @@ class UserStore(MongoStore):
         #   'first_name': firstname
         #   'last_name': lastname
         # }
-        return self.find_one({
-                'email': user['email']
-            })
+        try:
+            return self.find_one({
+                    'email': user['email']
+                })
+        except StoreConnectionError as e:
+            raise StoreUserNotFound("Connection error: %s" % str(e))
 
     def update_user(self, user):
         # user:
@@ -88,7 +94,7 @@ class UserStore(MongoStore):
             else:
                 raise StoreUserNotFound('%s already exists' % user['email'])
         except Exception as ex:
-            print("Failed updatating user %s - %s" % (user, ex))
+            logger.info("Failed updatating user %s - %s" % (user, ex))
             raise
 
     def delete_user(self, user):
@@ -107,5 +113,5 @@ class UserStore(MongoStore):
             else:
                 raise StoreUserNotFound('%s already exists' % user['email'])
         except Exception as ex:
-            print("Failed deleting user %s - %s" % (user, ex))
+            logger.info("Failed deleting user %s - %s" % (user, ex))
             raise

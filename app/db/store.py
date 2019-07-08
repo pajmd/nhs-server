@@ -1,7 +1,17 @@
 import pymongo
+import logging
+import os
 
-MONGO_URI = 'mongodb://127.0.0.1:27017/'
+
+#logger = logging.getLogger("%s.%s" % ('nhs-app', __name__))
+logger = logging.getLogger()
+mongo_host = os.environ.get('MONGO_HOST', "127.0.0.1")
+MONGO_URI = 'mongodb://%s:27017/' % mongo_host
 MONGO_DATABASE = 'nhsdb'
+
+
+class StoreConnectionError(Exception):
+    pass
 
 
 class MongoStore(object):
@@ -12,8 +22,12 @@ class MongoStore(object):
         self.collection_name = collection_name
 
     def open_db(self):
-        self.client = pymongo.MongoClient(self.mongo_uri)
-        self.db = self.client[self.mongo_db]
+        try:
+            self.client = pymongo.MongoClient(self.mongo_uri)
+            self.db = self.client[self.mongo_db]
+        except Exception as e:
+            logger.error(e)
+            raise
 
     def apply_validation(self, validation_schema):
         if self.collection_name in self.db.list_collection_names():
@@ -35,8 +49,15 @@ class MongoStore(object):
         self.client.close()
 
     def find_one(self, criteria):
-        match = self.db[self.collection_name].find_one(criteria)
-        return match
+        try:
+            match = self.db[self.collection_name].find_one(criteria)
+            return match
+        except pymongo.mongo_client.ServerSelectionTimeoutError as e:
+            logger.error("Could not find %s - error: %s" % (criteria , str(e)))
+            raise StoreConnectionError(e)
+        except Exception as e:
+            logger.error("Could not find %s - error: %s" % (criteria , str(e)))
+            raise StoreConnectionError(e)
 
     def insert_one(self, document):
         return self.db[self.collection_name].insert_one(document).inserted_id
