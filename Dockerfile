@@ -5,7 +5,7 @@
 
 # Use an official Python runtime as a parent image
 # FROM python:3.6-slim
-FROM nhs-ui
+FROM nhs-ui:0.2
 
 # Set the working directory to /app
 WORKDIR /app
