@@ -12,3 +12,10 @@ In run.py:
             static_folder = "<root folder>/nhs-ui/dist",
             template_folder = "<root folder>/nhs-ui/dist")
 ````
+
+####SWGI:
+  * Cherrypy
+  
+#### WebServer
+  * nginx
+  
