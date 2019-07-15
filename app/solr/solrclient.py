@@ -1,5 +1,9 @@
 import requests
 from app.solr.solrconfig import get_solr_query, get_url
+import logging
+
+
+logger = logging.getLogger()
 
 
 # wild request to return everything in the collection
@@ -46,9 +50,12 @@ def solr_search(req):
     #     unit: "",
     #     [free_search]: ""
     # }
-    if req['fieldValues']["Free Search"]:
+    # if req['fieldValues']["Free Search"]:
+    if req['tabIndex'] == 0:
         req_str = build_free_text_search_payload(req['fieldValues']["Free Search"])
     else:
+        # in case it is set from a previous search
+        req['fieldValues'].pop("Free Search", None)
         req_str = build_field_search_payload(req['fieldValues'])
 
     solr_request = get_solr_query(req_str)
@@ -58,6 +65,6 @@ def solr_search(req):
     #     if v:
     #         params[k] = v
     # r = requests.get(url=get_url(), params=params)
-    app.logger.info("requesting solr: %s" % r.url)
+    logger.info("requesting solr: %s" % r.url)
     r.raise_for_status()
     return r.json()
