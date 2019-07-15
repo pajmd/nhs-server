@@ -35,10 +35,10 @@ def get_header_jwt(headers):
 
 
 def user_authorized(headers):
-    jwt = get_header_jwt(headers)
+    json_web_token = get_header_jwt(headers)
     try:
-        if jwt:
-            return jwt.verify(jwt, secrets.get_jwt_secret())
+        if json_web_token:
+            return jwt.verify(json_web_token, secrets.get_jwt_secret())
     except jwt.JwtInvalidSignatureError:
         return None
 
