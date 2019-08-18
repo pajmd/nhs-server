@@ -2,7 +2,7 @@
 # This Makefile build the nhs-server-app image, tags it and pushes to local docker repos
 #
 NAME   := pjmd-ubuntu:5001/nhs-server-app
-TAG    := $$(git describe)
+TAG    := $$(git describe --tag)
 IMG    := ${NAME}:${TAG}
 LATEST := ${NAME}:latest
  
