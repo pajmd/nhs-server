@@ -1,12 +1,15 @@
+import os
+
+
 SOLR_HOST = "SOLR_HOST"
 SOLR_PORT = "SOLR_PORT"
 SOLR_COLLECTION = "SOLR_COLLECTION"
 
 
 solr = {
-    "SOLR_HOST": 'localhost',
-    "SOLR_PORT": 8983,
-    "SOLR_COLLECTION": 'nhsCollection'
+    "SOLR_HOST": os.environ.get(SOLR_HOST, 'localhost'),
+    "SOLR_PORT": os.environ.get(SOLR_PORT, 8983),
+    "SOLR_COLLECTION": os.environ.get(SOLR_COLLECTION, 'nhsCollection')
 }
 
 
