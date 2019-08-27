@@ -53,10 +53,10 @@ class MongoStore(object):
             match = self.db[self.collection_name].find_one(criteria)
             return match
         except pymongo.mongo_client.ServerSelectionTimeoutError as e:
-            logger.error("Could not find %s - error: %s" % (criteria , str(e)))
+            logger.error("Could not find %s - error: %s" % (criteria, str(e)))
             raise StoreConnectionError(e)
         except Exception as e:
-            logger.error("Could not find %s - error: %s" % (criteria , str(e)))
+            logger.error("Could not find %s - error: %s" % (criteria, str(e)))
             raise StoreConnectionError(e)
 
     def insert_one(self, document):
