@@ -25,7 +25,7 @@
 
 # Use an official Python runtime as a parent image
 # FROM python:3.6-slim
-FROM pjmd-ubuntu:5001/nhs-ui:v0.0.1
+FROM pjmd-ubuntu:5001/nhs-ui:v0.0.3
 
 # labeling this build with the version of the web app passed as argument in the docker build command
 #
