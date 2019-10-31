@@ -1,10 +1,37 @@
-from app.db.store import MongoStore, MONGO_URI
+from app.db.store import MongoStore, MONGO_URI, get_mongo_uri
 import datetime
 import pytest
 from pymongo import errors
 
 TEST_DB = 'test_nhsdb'
 TEST_COLLECTION = 'test_users'
+
+
+@pytest.mark.parametrize('mongo_host, mongo_port,mongo_replset, expected',[
+    ('1.1.1.1', None, None, 'mongodb://1.1.1.1:27017/'),
+    ('1.1.1.1', '1111', None,  'mongodb://1.1.1.1:1111/'),
+    ('1.1.1.1', '2222', 'rs2', 'mongodb://1.1.1.1:2222/replicaSet=rs2'),
+    ('1.1.1.1, 2.2.2.2, 3.3.3.3  ', ' 111, 2222 , 3333 ', None, 'mongodb://1.1.1.1:111,2.2.2.2:2222,3.3.3.3:3333/'),
+    ('1.1.1.1, 2.2.2.2', None, 'rs4', 'mongodb://1.1.1.1:27017,2.2.2.2:27017/replicaSet=rs4'),
+    ('1.1.1.1, 2.2.2.2', '555', None, 'mongodb://1.1.1.1:555,2.2.2.2:555/')
+])
+def test_mongo_uri(mongo_host, mongo_port,mongo_replset, expected):
+    import os
+
+    def clear_env():
+        for v in ['MONGO_HOST', 'MONGO_PORT', 'MONGO_REPLSET']:
+            if v in os.environ:
+                del os.environ[v]
+
+    clear_env()
+    os.environ
+    if mongo_host:
+        os.environ['MONGO_HOST'] = mongo_host
+    if mongo_port:
+        os.environ['MONGO_PORT'] = mongo_port
+    if mongo_replset:
+        os.environ['MONGO_REPLSET'] = mongo_replset
+    assert get_mongo_uri() == expected
 
 
 def test_start_mongo_no_existing_collection_db(start_mongo_no_existing_collection_db):

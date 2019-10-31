@@ -5,8 +5,28 @@ import os
 
 #logger = logging.getLogger("%s.%s" % ('nhs-app', __name__))
 logger = logging.getLogger()
-mongo_host = os.environ.get('MONGO_HOST', "127.0.0.1")
-MONGO_URI = 'mongodb://%s:27017/' % mongo_host
+
+
+def get_mongo_uri():
+    mongo_host = os.environ.get('MONGO_HOST', "127.0.0.1")
+    mongo_port = os.environ.get('MONGO_PORT', '27017')
+    mongo_relpset = os.environ.get('MONGO_REPLSET')
+    hosts = [host.strip(' ') for host in mongo_host.split(',')]
+    ports = [port.strip(' ') for port in mongo_port.split(',')]
+    if len(hosts) == len(ports):
+        uri = ",".join(["%s:%s" % (host, port) for (host, port) in zip(hosts, ports)])
+    elif len(ports) == 1:
+        uri = ",".join(["%s:%s" % (host, mongo_port) for host in hosts])
+    else:
+        raise Exception("Error: mismatched between mongo hosts (%s) and ports (%s)" % (mongo_host, mongo_port))
+    if mongo_relpset:
+        uri = 'mongodb://%s/replicaSet=%s' % (uri, mongo_relpset)
+    else:
+        uri = 'mongodb://%s/' % uri
+    return uri
+
+
+MONGO_URI = get_mongo_uri()
 MONGO_DATABASE = 'nhsdb'
 
 
