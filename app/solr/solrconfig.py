@@ -1,5 +1,5 @@
 import os
-
+from urllib import parse
 
 SOLR_HOST = "SOLR_HOST"
 SOLR_PORT = "SOLR_PORT"
@@ -27,10 +27,12 @@ def get_url():
         uri=get_solr_uri(solr.get(SOLR_HOST), solr.get(SOLR_PORT)),
         collection_url=get_collection_url(solr.get(SOLR_COLLECTION)))
 
+def get_payload_url_encoded(paylod):
+    return parse.quote(paylod)
 
 def get_solr_query(payload):
     return "{uri}/{collection_url}={payload}".format(
         uri=get_solr_uri(solr.get(SOLR_HOST), solr.get(SOLR_PORT)),
         collection_url=get_collection_url(solr.get(SOLR_COLLECTION)),
-        payload=payload
+        payload=get_payload_url_encoded(payload)
     )

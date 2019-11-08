@@ -32,12 +32,17 @@ def build_free_text_search_payload(free_search_text):
     return "%20AND%20".join(star_tokens)
 
 
+def escape_space(field):
+    s = field.replace(' ', '\\ ')
+    return s
+
+
 def build_field_search_payload(field_values):
     field_value_list = []
     for k, v in field_values.items():
         if v:
-            field_value_list.append("{field}:{value}".format(field=k, value=v))
-    return "%20AND%20".join(field_value_list)
+            field_value_list.append("{field}:{value}".format(field=escape_space(k), value=v))
+    return " AND ".join(field_value_list)
 
 def solr_search(req):
     # fieldValues: {
