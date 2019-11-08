@@ -3,7 +3,7 @@
 #
 APP    := nhs-server-app
 PUBLIC_REPO := pajmd
-NAME   := pjmd-ubuntu.com/${app}
+NAME   := pjmd-ubuntu.com/${APP}
 TAG    := $$(git describe --tag)
 IMG    := ${NAME}:${TAG}
 LATEST := ${NAME}:latest
